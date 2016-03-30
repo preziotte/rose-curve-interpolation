@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+    background-color: #2A363B;
+}
+
+button {
+  position: fixed;
+  z-index: 40;
+  top: 10px;
+  left: 10px;
+  border-color: #E84A5F;
+  background-color: #E84A5F;
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  font-family: monospace;
+   cursor: pointer;
+}
+
+.equation {
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  color: white;
+  font-size: 24px;
+  font-family: monospace;  
+}
+.equation span {
+  color: #E84A5F;
+}
+.grid {
+  position: fixed;
+  z-index: 30;
+  width: 100%;
+  height: 100%;
+}
+.cell {
+/*  width: 14.28%;
+  height: 14.28%;
+*/ 
+  width: 10%;
+  height: 10%;
+ display: inline-block;
+ cursor: pointer;
+}
+
+.cell:hover {
+  background-color: #4D586C;
+  opacity: 0.3;
+}
+
+svg {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+}
+
+svg path {
+  opacity: 1;
+  fill: #E84A5F;
+  stroke: #EEE6AB;
+  stroke-width: 1px;
+  stroke-linecap: rounded;
+}
+
+.frame {
+  fill: none;
+  stroke: #000;
+}
+
+.axis text {
+  font: 10px sans-serif;
+  fill: white;
+}
+
+.axis line,
+.axis circle {
+  fill: none;
+  stroke: #EEE6AB;
+  stroke-dasharray: 1,4;
+}
+
+.axis {
+  opacity: 0;
+  -webkit-transition: opacity .5s linear;
+     -moz-transition: opacity .5s linear;
+       -o-transition: opacity .5s linear;
+          transition: opacity .5s linear;
+
+}
+svg:hover .axis {
+	opacity: 0;
+}
+
+.axis :last-of-type circle {
+  stroke: #EEE6AB;
+  stroke-dasharray: none;
+}
+
+.line {
+  fill: none;
+  stroke: #E84A5F;
+  stroke-width: 1.5px;
+  stroke-dasharray: 40 10 90 10;
+  stroke-dasharray: 10 40 10 90;
+  stroke-dasharray: 0;
+  stroke-dashoffset: 0;
+  -webkit-animation: dash 1s ease infinite;
+     -moz-animation: dash 1s ease infinite;
+          animation: dash 1s ease infinite;
+}
+
+@keyframes dash {
+  100% {
+    stroke-dashoffset: 150;
+  }
+}
+
+@-webkit-keyframes dash {
+  100% {
+    stroke-dashoffset: 150;
+  }
+}
+
+@keyframes throb {
+  0% {
+    transform: scale(.1);
+  }
+  50% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(.1);
+  }
+}
+
+@-webkit-keyframes throb {
+  0% {
+    transform: scale(.1);
+  }
+  50% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(.1);
+  }
+}
+
+</style>
+<body>
+
+<script src="https://d3js.org/d3.v3.min.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.0.min.js"></script>
+
+<script>
+
+// http://www.colourlovers.com/palette/1098589/coup_de_gr%C3%A2ce
+// http://bl.ocks.org/mbostock/4583749
+// http://www.mathamazement.com/Lessons/Pre-Calculus/06_Additional-Topics-in-Trigonometry/graphs-of-polar-equations.html
+// http://mathworld.wolfram.com/topics/PolarCurves.html
+
+var data3 = d3.range(0, 20 * Math.PI, .01).map(function(t) {
+  var r = Math.cos((4/7)*t);
+  return [t, r*1];
+});
+
+var n = 1;
+var d = 7;
+
+var generate = function () {
+  n = Math.floor(Math.random() * 10) + 1
+  d = Math.floor(Math.random() * 10) + 1
+  updateEquation();
+
+  var data4 = d3.range(0, 20 * Math.PI, .01).map(function(t) {
+    var k = n/d;
+    var r = Math.cos(k*t);
+    return [t, r*1];
+  });
+
+  d3.selectAll(".line")
+      .datum(data4)
+    .transition()
+      .duration(500)
+      .attr("d", line);
+};
+
+
+var width = window.innerWidth,
+    height = window.innerHeight-20,
+    radius = Math.min(width, height) / 2 - 30;
+
+var r = d3.scale.linear()
+    .domain([0, 1])
+    .range([0, radius]);
+
+var line = d3.svg.line.radial()
+    .radius(function(d) { return r(d[1]); })
+    .angle(function(d) { return -d[0] + Math.PI / 2; });
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+  .append("g")
+    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+var gr = svg.append("g")
+    .attr("class", "r axis")
+  .selectAll("g")
+    .data(r.ticks(5).slice(1))
+  .enter().append("g");
+
+gr.append("circle")
+    .attr("r", r);
+
+var ga = svg.append("g")
+    .attr("class", "a axis")
+  .selectAll("g")
+    .data(d3.range(0, 360, 30))
+  .enter().append("g")
+    .attr("transform", function(d) { return "rotate(" + -d + ")"; });
+
+ga.append("line")
+    .attr("x2", radius);
+
+
+svg.append("path")
+    .datum(data3)
+    .attr("class", "line")
+    .attr("d", line);
+
+var grid = d3.select('body').append('div').attr('class', 'grid');
+
+for (var i = 1; i < 11; i++) {
+
+  for (var j = 1; j < 11; j++) {
+
+    grid.append("div")
+        .attr("class", 'cell')
+        .attr("data-n", j)
+        .attr("data-d", i);
+ 
+  }
+}
+
+
+$('.cell').on('click touchend', function() {
+    n = $(this).attr('data-n');
+    d = $(this).attr('data-d');
+    updateEquation();
+    console.log(n+'/'+d);
+    var data4 = d3.range(0, 20 * Math.PI, .01).map(function(t) {
+    var k = n/d;
+    var r = Math.cos(k*t);
+    return [t, r*1];
+  });
+
+  d3.selectAll(".line")
+      .datum(data4)
+    .transition()
+      .duration(2500)
+      .attr("d", line);
+
+});
+
+  function updateEquation() {
+    $('.equation').html("r=cos((<span>"+n+"</span>/<span>"+d+"</span>)*θ)");    
+  };
+</script>
+
+<body>
+  <button onclick="generate()">Randomize</button>
+  <span class='equation'>r=cos((<span>1</span>/<span>7</span>)*θ)</span>
+
+  </div>
+</body>
+
+</html>
